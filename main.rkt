@@ -6,7 +6,8 @@
          web-server/http/response
          "src/config.rkt"
          "src/webhook.rkt"
-         "src/build.rkt")
+         "src/build.rkt"
+         "src/deploy.rkt")
 
 ;; Main program
 (define (main)

@@ -7,7 +7,12 @@
          cfg-port
          cfg-repo-path
          cfg-repo-url
-         cfg-build-output)
+         cfg-build-output
+         cfg-deploy-enabled?
+         cfg-deploy-remote-host
+         cfg-deploy-remote-path
+         cfg-deploy-ssh-key
+         cfg-deploy-rsync-options)
 
 ;; Global configuration hash
 (define config (make-hash))
@@ -30,3 +35,15 @@
 (define (cfg-repo-path) (get-config 'repo-path))
 (define (cfg-repo-url) (get-config 'repo-url))
 (define (cfg-build-output) (get-config 'build-output))
+
+;; Deploy configuration accessors
+(define (cfg-deploy-enabled?) 
+  (hash-ref (get-config 'deploy #hash()) 'enabled #f))
+(define (cfg-deploy-remote-host) 
+  (hash-ref (get-config 'deploy #hash()) 'remote-host #f))
+(define (cfg-deploy-remote-path) 
+  (hash-ref (get-config 'deploy #hash()) 'remote-path #f))
+(define (cfg-deploy-ssh-key) 
+  (hash-ref (get-config 'deploy #hash()) 'ssh-key #f))
+(define (cfg-deploy-rsync-options) 
+  (hash-ref (get-config 'deploy #hash()) 'rsync-options "-avz --delete"))

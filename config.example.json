@@ -3,5 +3,12 @@
   "port": 8080,
   "repo-path": "/var/www/blog",
   "repo-url": "https://github.com/username/repo.git",
-  "build-output": "/var/www/blog/dist"
+  "build-output": "/var/www/blog/dist",
+  "deploy": {
+    "enabled": true,
+    "remote-host": "user@example.com",
+    "remote-path": "/var/www/blog/dist",
+    "ssh-key": "/root/.ssh/id_rsa",
+    "rsync-options": "-avz --delete"
+  }
 }

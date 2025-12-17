@@ -5,7 +5,8 @@
          json
          "config.rkt"
          "git.rkt"
-         "build.rkt")
+         "build.rkt"
+         "deploy.rkt")
 
 (provide handle-webhook)
 
@@ -76,6 +77,16 @@
                                       (hash-set! last-build 'status "failed")
                                       (hash-set! last-build 'error (exn-message e)))])
                       (define build-ok? (build-site (cfg-repo-path)))
+                      
+                      ;; Deploy to remote if build succeeded
+                      (when build-ok?
+                        (with-handlers ([exn:fail?
+                                        (lambda (e)
+                                          (printf "Deploy error: ~a\n" (exn-message e))
+                                          (hash-set! last-build 'deploy-status "failed"))])
+                          (define deploy-ok? (deploy-to-remote))
+                          (hash-set! last-build 'deploy-status 
+                                    (if deploy-ok? "success" "failed"))))
                       
                       ;; Record build result
                       (if build-ok?
