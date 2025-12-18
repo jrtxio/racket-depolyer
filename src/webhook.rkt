@@ -13,6 +13,9 @@
 ;; Global deployment lock to prevent concurrent builds
 (define deploying? (make-semaphore 1))
 
+;; Flag to indicate if a rebuild is needed after current build completes
+(define rebuild-pending? (make-parameter #f))
+
 ;; Last build information
 (define last-build (make-hash))
 
@@ -47,55 +50,81 @@
     (printf "Pusher: ~a\n" pusher)
     (printf "Commit: ~a\n" (substring commit 0 (min 7 (string-length commit))))))
 
-;; Deploy in background thread
+;; Execute one build cycle
+(define (execute-build)
+  ;; Record build start
+  (hash-set! last-build 'status "building")
+  (hash-set! last-build 'start-time (current-seconds))
+  
+  ;; Pull latest code
+  (define pull-ok? (pull-repo (cfg-repo-path)))
+  
+  ;; Check if node_modules exists (first deployment)
+  (define node-modules (build-path (cfg-repo-path) "node_modules"))
+  (unless (directory-exists? node-modules)
+    (printf "First deployment, installing dependencies...\n")
+    (install-dependencies (cfg-repo-path)))
+  
+  ;; Build site
+  (with-handlers ([exn:fail? 
+                  (lambda (e)
+                    (printf "Build error: ~a\n" (exn-message e))
+                    (hash-set! last-build 'status "failed")
+                    (hash-set! last-build 'error (exn-message e))
+                    #f)])
+    (define build-ok? (build-site (cfg-repo-path)))
+    
+    ;; Deploy to remote if build succeeded
+    (when build-ok?
+      (with-handlers ([exn:fail?
+                      (lambda (e)
+                        (printf "Deploy error: ~a\n" (exn-message e))
+                        (hash-set! last-build 'deploy-status "failed"))])
+        (define deploy-ok? (deploy-to-remote))
+        (hash-set! last-build 'deploy-status 
+                  (if deploy-ok? "success" "failed"))))
+    
+    ;; Record build result
+    (if build-ok?
+        (begin
+          (hash-set! last-build 'status "success")
+          (hash-set! last-build 'end-time (current-seconds))
+          #t)
+        (begin
+          (hash-set! last-build 'status "failed")
+          #f))))
+
+;; Deploy in background thread with rebuild logic
 (define (deploy-async)
   (thread (lambda ()
             (if (semaphore-try-wait? deploying?)
+                ;; Successfully acquired lock - start building
                 (dynamic-wind
                   void
                   (lambda ()
                     (sleep 0.1)
                     
-                    ;; Record build start
-                    (hash-set! last-build 'status "building")
-                    (hash-set! last-build 'start-time (current-seconds))
-                    
-                    ;; Pull latest code
-                    (define pull-ok? (pull-repo (cfg-repo-path)))
-                    
-                    ;; Check if node_modules exists (first deployment)
-                    (define node-modules (build-path (cfg-repo-path) "node_modules"))
-                    (unless (directory-exists? node-modules)
-                      (printf "First deployment, installing dependencies...\n")
-                      (install-dependencies (cfg-repo-path)))
-                    
-                    ;; Build site
-                    (with-handlers ([exn:fail? 
-                                    (lambda (e)
-                                      (printf "Build error: ~a\n" (exn-message e))
-                                      (hash-set! last-build 'status "failed")
-                                      (hash-set! last-build 'error (exn-message e)))])
-                      (define build-ok? (build-site (cfg-repo-path)))
+                    ;; Build loop: keep building while rebuild is pending
+                    (let loop ()
+                      ;; Clear rebuild flag before starting
+                      (rebuild-pending? #f)
                       
-                      ;; Deploy to remote if build succeeded
-                      (when build-ok?
-                        (with-handlers ([exn:fail?
-                                        (lambda (e)
-                                          (printf "Deploy error: ~a\n" (exn-message e))
-                                          (hash-set! last-build 'deploy-status "failed"))])
-                          (define deploy-ok? (deploy-to-remote))
-                          (hash-set! last-build 'deploy-status 
-                                    (if deploy-ok? "success" "failed"))))
+                      (printf "\n=== Starting build cycle ===\n")
+                      (execute-build)
                       
-                      ;; Record build result
-                      (if build-ok?
+                      ;; Check if another build is needed
+                      (if (rebuild-pending?)
                           (begin
-                            (hash-set! last-build 'status "success")
-                            (hash-set! last-build 'end-time (current-seconds)))
-                          (hash-set! last-build 'status "failed"))))
+                            (printf "\n⚠ New commits detected, rebuilding...\n")
+                            (loop))
+                          (printf "\n✓ Build cycle complete, no pending rebuilds\n"))))
                   (lambda ()
                     (semaphore-post deploying?)))
-                (printf "⚠ Build already in progress, skipping...\n")))))
+                
+                ;; Lock already held - mark rebuild as pending
+                (begin
+                  (rebuild-pending? #t)
+                  (printf "⚠ Build in progress, marked for rebuild after completion\n"))))))
 
 ;; Handle webhook requests
 (define (handle-webhook req)
@@ -112,6 +141,8 @@
       #:mime-type #"text/plain"
       (lambda (out)
         (fprintf out "Status: ~a\n" status)
+        (when (rebuild-pending?)
+          (fprintf out "Rebuild pending: yes\n"))
         (when (hash-has-key? last-build 'end-time)
           (fprintf out "Last build: ~a seconds ago\n"
                   (- (current-seconds) (hash-ref last-build 'end-time))))))]
