@@ -17,7 +17,6 @@
 (define last-build (make-hash))
 
 ;; Compute HMAC-SHA256 signature using openssl
-;; Optimized: use pipe instead of temporary file
 (define (hmac-sha256 key data)
   (string-trim
    (with-output-to-string
@@ -110,6 +109,7 @@
           (equal? path (list (path/param "health" '()))))
      (define status (hash-ref last-build 'status "idle"))
      (response/output
+      #:mime-type #"text/plain"
       (lambda (out)
         (fprintf out "Status: ~a\n" status)
         (when (hash-has-key? last-build 'end-time)
@@ -119,8 +119,10 @@
     ;; GET / - Basic status
     [(bytes=? method #"GET")
      (response/output
+      #:mime-type #"text/plain"
       (lambda (out)
-        (fprintf out "Blog Deploy Webhook\nStatus: Running\n")))]
+        (fprintf out "Blog Deploy Webhook\n")
+        (fprintf out "Status: Running\n")))]
     
     ;; POST / - Webhook handler
     [(bytes=? method #"POST")
@@ -147,6 +149,7 @@
            
            ;; Return immediately
            (response/output
+            #:mime-type #"text/plain"
             (lambda (out)
               (fprintf out "Webhook accepted\n"))))
          
@@ -156,6 +159,7 @@
            (printf "======================\n")
            (response/output
             #:code 401
+            #:mime-type #"text/plain"
             (lambda (out)
               (fprintf out "Unauthorized\n")))))]
     
@@ -163,5 +167,6 @@
     [else
      (response/output
       #:code 405
+      #:mime-type #"text/plain"
       (lambda (out)
         (fprintf out "Method not allowed\n")))]))

@@ -25,6 +25,10 @@
   (printf "========================================\n")
   (printf "Port: ~a\n" (cfg-port))
   (printf "Repo: ~a\n" (cfg-repo-path))
+  
+  ;; Check and display deploy configuration
+  (check-deploy-config)
+  
   (printf "========================================\n")
   (printf "\n")
   

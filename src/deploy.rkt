@@ -18,7 +18,7 @@
 (define (check-deploy-config)
   (cond
     [(not (cfg-deploy-enabled?))
-     (printf "Deploy: Disabled\n")
+     (printf "✓ Deploy: Disabled\n")
      #t]
     [(not (check-rsync))
      (printf "✗ rsync not found. Install with: apt install rsync\n")
@@ -33,7 +33,7 @@
      (printf "✗ SSH key not found: ~a\n" (cfg-deploy-ssh-key))
      #f]
     [else
-     (printf "Deploy: Enabled → ~a:~a\n" 
+     (printf "✓ Deploy: Enabled → ~a:~a\n" 
              (cfg-deploy-remote-host)
              (cfg-deploy-remote-path))
      #t]))
