@@ -5,6 +5,7 @@
 (provide load-config
          cfg-github-secret
          cfg-port
+         cfg-listen-ip
          cfg-repo-path
          cfg-repo-url
          cfg-build-output
@@ -32,6 +33,7 @@
 ;; Configuration accessors
 (define (cfg-github-secret) (get-config 'github-secret))
 (define (cfg-port) (get-config 'port 8080))
+(define (cfg-listen-ip) (get-config 'listen-ip "127.0.0.1"))
 (define (cfg-repo-path) (get-config 'repo-path))
 (define (cfg-repo-url) (get-config 'repo-url))
 (define (cfg-build-output) (get-config 'build-output))

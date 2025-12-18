@@ -1,6 +1,7 @@
 {
   "github-secret": "YOUR_SECRET_HERE",
   "port": 8080,
+  "listen-ip": "127.0.0.1",
   "repo-path": "/var/www/blog",
   "repo-url": "https://github.com/username/repo.git",
   "build-output": "/var/www/blog/dist",

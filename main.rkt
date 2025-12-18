@@ -24,6 +24,7 @@
   (printf "  Blog Deploy Webhook Server\n")
   (printf "========================================\n")
   (printf "Port: ~a\n" (cfg-port))
+  (printf "Listen: ~a\n" (cfg-listen-ip))
   (printf "Repo: ~a\n" (cfg-repo-path))
   
   ;; Check and display deploy configuration
@@ -51,12 +52,28 @@
                                (fprintf out "Internal Server Error\n")))))])
         (handle-webhook req))))
   
-  ;; Start HTTP server (HTTPS handled by Nginx)
-  (printf "Starting HTTP server on port ~a...\n" (cfg-port))
-  (printf "Listening on 127.0.0.1 (use Nginx for public access)\n")
+  ;; Start HTTP server
+  (define listen-ip (cfg-listen-ip))
+  (printf "Starting HTTP server on ~a:~a...\n" listen-ip (cfg-port))
+  
+  ;; Display access information based on listen IP
+  (cond
+    [(string=? listen-ip "0.0.0.0")
+     (printf "Server accessible from: http://YOUR_SERVER_IP:~a\n" (cfg-port))
+     (printf "⚠ WARNING: Server is exposed to public network\n")
+     (printf "⚠ GitHub webhook should use: http://YOUR_DOMAIN:~a/\n" (cfg-port))
+     (printf "⚠ SSL verification must be DISABLED (not secure)\n")]
+    [(string=? listen-ip "127.0.0.1")
+     (printf "Server accessible from: http://localhost:~a (local only)\n" (cfg-port))
+     (printf "Use Nginx as reverse proxy for public HTTPS access\n")]
+    [else
+     (printf "Server accessible from: http://~a:~a\n" listen-ip (cfg-port))])
+  
+  (printf "\n")
+  
   (serve/servlet servlet-handler
                  #:port (cfg-port)
-                 #:listen-ip "127.0.0.1"  ; Listen on localhost only
+                 #:listen-ip listen-ip
                  #:servlet-path "/"
                  #:servlet-regexp #rx""
                  #:launch-browser? #f))
