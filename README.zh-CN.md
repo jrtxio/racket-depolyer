@@ -1,20 +1,22 @@
 # Deployer
 
-[English](README.md) | [中文](README.zh-CN.md)
-
 一个用 Racket 编写的轻量级、高性能 CI/CD Webhook 服务器。专为 **Obsidian Digital Garden** 用户设计，帮助你从 Vercel 迁移到自己的 VPS 上自主部署。
+
+![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
+[English](README.md) · **中文**
 
 ## 功能特性
 
-- **完全自主托管** -- 完整掌控部署流程，不受平台限制
-- **专为 Obsidian Digital Garden 设计** -- 针对插件的发布流程优化
-- **异步构建** -- 立即响应 GitHub，后台执行构建任务
-- **并发安全** -- 基于信号量的锁机制防止并发构建；构建期间有新推送时自动排队重建
-- **HMAC-SHA256 签名验证** -- 校验 GitHub Webhook 签名，防止伪造请求
-- **灵活部署** -- 支持 HTTP 直连，也支持 Nginx 反向代理 (HTTPS)
-- **rsync 远程部署** -- 可选将构建产物同步到独立的 Web 服务器
-- **健康检查接口** -- `/health` 返回当前构建状态和距上次构建的时间
-- **自动重试** -- `git pull` 失败时自动重试
+- **完全自主托管** —— 完整掌控部署流程，不受平台限制
+- **专为 Obsidian Digital Garden 设计** —— 针对插件的发布流程优化
+- **异步构建** —— 立即响应 GitHub，后台执行构建任务
+- **并发安全** —— 基于信号量的锁机制防止并发构建；构建期间有新推送时自动排队重建
+- **HMAC-SHA256 签名验证** —— 校验 GitHub Webhook 签名，防止伪造请求
+- **灵活部署** —— 支持 HTTP 直连，也支持 Nginx 反向代理（HTTPS）
+- **rsync 远程部署** —— 可选将构建产物同步到独立的 Web 服务器
+- **健康检查接口** —— `/health` 返回当前构建状态和距上次构建的时间
+- **自动重试** —— `git pull` 失败时自动重试
 
 ## 环境要求
 
@@ -32,7 +34,7 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/jrtxio/deployer.git
+git clone https://github.com/turinglambdaai/deployer.git
 cd deployer
 ```
 
@@ -96,7 +98,7 @@ racket main.rkt
 在仓库设置中添加 Webhook：
 
 | 字段 | HTTP 直连 | Nginx HTTPS |
-|------|----------|-------------|
+|------|-----------|-------------|
 | Payload URL | `http://your-server:8080/` | `https://webhook.example.com:8443/` |
 | Content type | `application/json` | `application/json` |
 | Secret | 你的 `github-secret` | 你的 `github-secret` |
@@ -175,4 +177,4 @@ sudo systemctl start deployer
 
 ## 许可证
 
-基于 [Apache License 2.0](LICENSE) 许可。
+基于 [Apache License 2.0](LICENSE) 开源。

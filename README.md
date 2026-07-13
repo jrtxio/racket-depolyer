@@ -1,21 +1,22 @@
 # Deployer
 
-![Language](https://img.shields.io/badge/language-Racket-red) [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)  [![English](https://img.shields.io/badge/lang-English-blue)](README.md) [![中文](https://img.shields.io/badge/lang-中文-red)](README.zh-CN.md)
-
-
 A lightweight, high-performance CI/CD webhook server written in Racket. Designed as a self-hosted alternative for **Obsidian Digital Garden** users who want to move off Vercel and deploy on their own VPS.
+
+![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+
+**English** · [中文](README.zh-CN.md)
 
 ## Features
 
-- **Self-Hosted** -- full control over your deployment pipeline, no vendor lock-in
-- **Designed for Obsidian Digital Garden** -- optimized for the plugin's publish workflow
-- **Asynchronous Builds** -- responds to GitHub immediately while processing builds in the background
-- **Concurrency Safety** -- semaphore-based locking prevents simultaneous builds; queues rebuilds if new pushes arrive mid-build
-- **HMAC-SHA256 Verification** -- validates GitHub webhook signatures
-- **Flexible Deployment** -- serve directly over HTTP, or place behind an Nginx reverse proxy for HTTPS
-- **Remote Deploy via rsync** -- optionally sync build output to a separate web server
-- **Health Endpoint** -- `/health` returns current build status and time since last build
-- **Retry Logic** -- automatic `git pull` retry with configurable attempts
+- **Self-hosted** — full control over your deployment pipeline, no vendor lock-in
+- **Built for Obsidian Digital Garden** — optimized for the plugin's publish workflow
+- **Asynchronous builds** — responds to GitHub immediately while processing builds in the background
+- **Concurrency safety** — semaphore-based locking prevents simultaneous builds; rebuilds are queued if a new push arrives mid-build
+- **HMAC-SHA256 verification** — validates GitHub webhook signatures
+- **Flexible deployment** — serve directly over HTTP, or place behind an Nginx reverse proxy for HTTPS
+- **Remote deploy via rsync** — optionally sync build output to a separate web server
+- **Health endpoint** — `/health` returns current build status and time since last build
+- **Retry logic** — automatic `git pull` retry with configurable attempts
 
 ## Requirements
 
@@ -33,7 +34,7 @@ A lightweight, high-performance CI/CD webhook server written in Racket. Designed
 ### 1. Clone
 
 ```bash
-git clone https://github.com/jrtxio/deployer.git
+git clone https://github.com/turinglambdaai/deployer.git
 cd deployer
 ```
 
@@ -97,7 +98,7 @@ racket main.rkt
 In your repository settings, add a webhook:
 
 | Field | Direct HTTP | Nginx HTTPS |
-|-------|------------|-------------|
+|-------|-------------|-------------|
 | Payload URL | `http://your-server:8080/` | `https://webhook.example.com:8443/` |
 | Content type | `application/json` | `application/json` |
 | Secret | your `github-secret` | your `github-secret` |
