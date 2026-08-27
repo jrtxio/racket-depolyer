@@ -1,10 +1,25 @@
 # Deployer
 
-一个用 Racket 编写的轻量级、高性能 CI/CD Webhook 服务器。专为 **Obsidian Digital Garden** 用户设计，帮助你从 Vercel 迁移到自己的 VPS 上自主部署。
+一个用 Racket 写的极简 CI/CD Webhook 服务器，全部代码约 540 行——一次就能读完，却完整支撑过一个真实站点。专为 **Obsidian Digital Garden** 用户从 Vercel 迁移到自有 VPS 自主部署而设计。
 
 ![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 [English](README.md) · **中文**
+
+> **⚠️ 维护模式。** 项目功能完整、按文档可用，但不再积极维护。它最初是为自托管我的 Obsidian Digital Garden 而写；所服务的站点现已下线，代码保留为一个紧凑、可读的参考实现。欢迎提 bug，新功能大概率不会再加。如果你需要通用 CI/CD 系统，参见[什么时候该用别的工具](#什么时候该用别的工具)。
+
+## 为什么值得读这份代码
+
+整个服务器只有约 540 行 Racket，除标准库外不依赖任何框架——一条 CI/CD 流水线被还原到最简形态，每个设计决策都看得见：
+
+- **30 行实现构建队列** —— `src/webhook.rkt` 用信号量做构建锁（`semaphore-try-wait?`）加一个待重建标记：并发推送自动排队、合并为一次重建，而不是互相竞争。整套机制一屏就能看完。
+- **Webhook 安全** —— 对 GitHub 的 `X-Hub-Signature-256` 做 HMAC-SHA256 签名校验，未通过验证的请求直接 401，不会碰文件系统。
+- **无框架的失败处理** —— `src/git.rkt` 用约 40 行实现带重试的 git pull；`src/build.rkt` 和 `src/deploy.rkt` 编排 npm/rsync 子进程并传播错误。
+- **秒回 Webhook** —— GitHub 立即收到 200，构建在后台线程执行，慢的 `npm install` 不会触发 GitHub 的 webhook 超时重试。
+
+## 什么时候该用别的工具
+
+Deployer 刻意只做一件事：收到 push 后重建静态站点。如果你需要构建矩阵、容器隔离、UI 或任意流水线，请使用真正的 CI 系统——[Woodpecker CI](https://woodpecker-ci.org/)、[Drone](https://www.drone.io/) 或 [Gitea Actions](https://docs.gitea.com/usage/actions/overview)。如果只需要通用的 webhook 转接，[adnanh/webhook](https://github.com/adnanh/webhook) 是事实标准。
 
 ## 功能特性
 

@@ -1,10 +1,25 @@
 # Deployer
 
-A lightweight, high-performance CI/CD webhook server written in Racket. Designed as a self-hosted alternative for **Obsidian Digital Garden** users who want to move off Vercel and deploy on their own VPS.
+A minimal CI/CD webhook server in ~540 lines of Racket — small enough to read in one sitting, complete enough to have run a real site. Built as a self-hosted alternative for **Obsidian Digital Garden** users who want to move off Vercel and deploy on their own VPS.
 
 ![Racket](https://img.shields.io/badge/Racket-9F1D20?logo=racket&logoColor=white) [![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
 
 **English** · [中文](README.zh-CN.md)
+
+> **⚠️ Maintenance mode.** This project is feature-complete and works as documented, but is no longer actively maintained. It was built to self-host my Obsidian Digital Garden; the site it served has since been retired, and the code now lives on as a compact, readable reference implementation. Bug reports are welcome; new features are unlikely. For general-purpose CI/CD needs, see [When to use something else](#when-to-use-something-else).
+
+## Why this code is worth reading
+
+The whole server is ~540 lines of Racket with no framework beyond the standard library — a CI/CD pipeline reduced to its essentials, where every design decision is visible:
+
+- **A build queue in ~30 lines** — `src/webhook.rkt` uses a semaphore as a build lock (`semaphore-try-wait?`) plus a pending-rebuild flag, so concurrent pushes queue up and coalesce into one rebuild instead of racing each other. The entire mechanism fits on one screen.
+- **Webhook security** — HMAC-SHA256 verification against GitHub's `X-Hub-Signature-256`; unverified requests get a 401 before anything touches the filesystem.
+- **Failure handling without a framework** — `src/git.rkt` implements pull-with-retry in ~40 lines; `src/build.rkt` and `src/deploy.rkt` orchestrate npm/rsync subprocesses with error propagation.
+- **Fast webhook acknowledgment** — GitHub receives its 200 immediately while the build runs in a background thread, so a slow `npm install` never triggers GitHub's webhook timeout retry.
+
+## When to use something else
+
+Deployer deliberately does one thing: rebuild a static site on push. If you need build matrices, container isolation, a UI, or arbitrary pipelines, use a real CI system — [Woodpecker CI](https://woodpecker-ci.org/), [Drone](https://www.drone.io/), or [Gitea Actions](https://docs.gitea.com/usage/actions/overview). If you only need generic webhook plumbing, [adnanh/webhook](https://github.com/adnanh/webhook) is the standard tool.
 
 ## Features
 
